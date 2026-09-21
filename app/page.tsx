@@ -6,14 +6,8 @@ import { Search, Gem, Gift, Home, PlayCircle, Bookmark, User } from "lucide-reac
 import { MENU_DATA, CLUSTER_DATA } from "@/data/mockData";
 
 const menuTranslations: Record<string, string> = {
-  Discover: "Jelajah", 
-  Exclusive: "Eksklusif", 
-  New: "Baru", 
-  Ranking: "Peringkat", 
-  Categories: "Kategori",
+  Discover: "Jelajah", Exclusive: "Eksklusif", New: "Baru", Ranking: "Peringkat", Categories: "Kategori",
 };
-
-// Reusable kartu film
 const PosterCard = ({ item, badge, isGrid2 = false }: { item: any; badge?: string; isGrid2?: boolean }) => (
   <div className="flex flex-col gap-1.5 cursor-pointer group">
     <div className="relative aspect-[3/4] w-full rounded-md overflow-hidden bg-zinc-900">
@@ -44,8 +38,6 @@ export default function VPlusShortApp() {
   const [selectedMenuId, setSelectedMenuId] = useState<number>(menus[0]?.id || 1);
   const [selectedSubMenuId, setSelectedSubMenuId] = useState<number | null>(null);
   const [activeBottomNav, setActiveBottomNav] = useState<string>("Beranda");
-  
-  // State untuk modal ikon header
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const currentMenu = useMemo(() => menus.find((m) => m.id === selectedMenuId), [menus, selectedMenuId]);
@@ -55,7 +47,6 @@ export default function VPlusShortApp() {
     setSelectedSubMenuId(menu.sub_menus?.[0]?.id || null);
   };
 
-  // Data cluster yang dinamis berdasarkan menu/sub-menu aktif
   const activeClusters = useMemo(() => {
     const rawClusters = CLUSTER_DATA.data;
     const title = currentMenu?.title || "";
@@ -64,18 +55,9 @@ export default function VPlusShortApp() {
       const activeSub = currentMenu?.sub_menus?.find((s) => s.id === selectedSubMenuId);
       const isComingSoon = activeSub?.title === "Coming Soon" || activeSub?.page_id === 3;
 
-      if (isComingSoon) {
-        return rawClusters
-          .map((c: any) => {
-            if (c.properties?.type === "horizontal_strip") return c;
-            const items = c.items?.filter((i: any) => i.page_id === 3);
-            return items?.length ? { ...c, title: "Coming Soon", items } : null;
-          })
-          .filter(Boolean);
-      }
-      return rawClusters
-        .map((c: any) => (c.properties?.type === "horizontal_strip" ? null : { ...c, items: c.items?.filter((i: any) => i.page_id !== 3) }))
-        .filter(Boolean);
+      return isComingSoon
+        ? rawClusters.map((c: any) => c.properties?.type === "horizontal_strip" ? c : (c.items?.some((i: any) => i.page_id === 3) ? { ...c, title: "Coming Soon", items: c.items.filter((i: any) => i.page_id === 3) } : null)).filter(Boolean)
+        : rawClusters.map((c: any) => c.properties?.type === "horizontal_strip" ? null : { ...c, items: c.items?.filter((i: any) => i.page_id !== 3) }).filter(Boolean);
     }
 
     if (title === "Ranking" || title === "Peringkat") {
@@ -97,91 +79,32 @@ export default function VPlusShortApp() {
   return (
     <div className="bg-black min-h-screen flex justify-center text-white font-sans">
       <div className="w-full max-w-[480px] bg-black min-h-screen flex flex-col pb-20 relative border-x border-zinc-900 shadow-2xl">
-        {/* HEADER */}
         <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-zinc-900">
           <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-            <div 
-              className="flex items-center gap-1 font-bold text-2xl tracking-wide cursor-pointer"
-              onClick={() => {
-                setSelectedMenuId(menus[0]?.id || 1);
-                setSelectedSubMenuId(null);
-                setActiveBottomNav("Beranda");
-              }}
-            >
+            <div className="flex items-center gap-1 font-bold text-2xl tracking-wide cursor-pointer" onClick={() => { setSelectedMenuId(menus[0]?.id || 1); setSelectedSubMenuId(null); setActiveBottomNav("Beranda"); }}>
               <span>V</span><span className="text-rose-500">+Short</span>
             </div>
-
-            {/* Ikon Header Interaktif */}
             <div className="flex items-center gap-4 text-zinc-300">
-              <button 
-                aria-label="Search" 
-                onClick={() => setActiveModal("Pencarian")} 
-                className="p-1 hover:bg-zinc-800 rounded-full transition"
-              >
-                <Search className="w-5 h-5 hover:text-white" />
-              </button>
-              <button 
-                aria-label="VIP" 
-                onClick={() => setActiveModal("VIP Benefit")} 
-                className="p-1 hover:bg-zinc-800 rounded-full transition"
-              >
-                <Gem className="w-5 h-5 text-amber-400 hover:text-amber-300" />
-              </button>
-              <button 
-                aria-label="Reward" 
-                onClick={() => setActiveModal("Klaim Hadiah")} 
-                className="p-1 hover:bg-zinc-800 rounded-full transition"
-              >
-                <Gift className="w-5 h-5 text-rose-500 hover:text-rose-400" />
-              </button>
+              <button aria-label="Search" onClick={() => setActiveModal("Pencarian")} className="p-1 hover:bg-zinc-800 rounded-full transition"><Search className="w-5 h-5 hover:text-white" /></button>
+              <button aria-label="VIP" onClick={() => setActiveModal("VIP Benefit")} className="p-1 hover:bg-zinc-800 rounded-full transition"><Gem className="w-5 h-5 text-amber-400 hover:text-amber-300" /></button>
+              <button aria-label="Reward" onClick={() => setActiveModal("Klaim Hadiah")} className="p-1 hover:bg-zinc-800 rounded-full transition"><Gift className="w-5 h-5 text-rose-500 hover:text-rose-400" /></button>
             </div>
           </div>
 
-          {/* Modal Pop-up Interaktif */}
-          {activeModal && (
-            <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 w-full max-w-xs text-center space-y-3 shadow-2xl">
-                <h3 className="text-lg font-bold text-white">{activeModal}</h3>
-                <p className="text-xs text-zinc-400">Fitur {activeModal} sedang dalam tahap pengembangan.</p>
-                <button 
-                  onClick={() => setActiveModal(null)} 
-                  className="w-full py-2 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 transition"
-                >
-                  Tutup
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Top Navigasi (Menu Utama) */}
+          {/* nav utama*/}
           <nav className="flex items-center gap-6 overflow-x-auto no-scrollbar px-4 py-2">
             {menus.map((menu) => (
-              <button
-                key={menu.id}
-                onClick={() => handleMenuClick(menu)}
-                className={`whitespace-nowrap relative pb-1.5 text-sm font-medium transition-all ${
-                  selectedMenuId === menu.id ? "text-white font-bold text-base" : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
+              <button key={menu.id} onClick={() => handleMenuClick(menu)} className={`whitespace-nowrap relative pb-1.5 text-sm font-medium transition-all ${selectedMenuId === menu.id ? "text-white font-bold text-base" : "text-zinc-400 hover:text-zinc-200"}`}>
                 {menuTranslations[menu.title] || menu.title}
-                {selectedMenuId === menu.id && (
-                  <span className="absolute bottom-0 left-0 w-full h-[2.5px] bg-rose-500 rounded-full" />
-                )}
+                {selectedMenuId === menu.id && <span className="absolute bottom-0 left-0 w-full h-[2.5px] bg-rose-500 rounded-full" />}
               </button>
             ))}
           </nav>
 
-          {/* Sub Navigasi */}
           {currentMenu?.sub_menus && currentMenu.sub_menus.length > 0 && (
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-4 py-2 bg-zinc-950/90 border-t border-zinc-900">
               {currentMenu.sub_menus.map((sub) => (
-                <button
-                  key={sub.id}
-                  onClick={() => setSelectedSubMenuId(sub.id)}
-                  className={`px-3.5 py-1 text-xs rounded-full whitespace-nowrap transition-all ${
-                    selectedSubMenuId === sub.id ? "bg-rose-600 text-white font-semibold" : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
+                <button key={sub.id} onClick={() => setSelectedSubMenuId(sub.id)} className={`px-3.5 py-1 text-xs rounded-full whitespace-nowrap transition-all ${selectedSubMenuId === sub.id ? "bg-rose-600 text-white font-semibold" : "bg-zinc-900 text-zinc-400 hover:text-zinc-200"}`}>
                   {sub.title}
                 </button>
               ))}
@@ -189,47 +112,45 @@ export default function VPlusShortApp() {
           )}
         </header>
 
-        {/* KONTEN UTAMA */}
+        {/* pop up*/}
+        {activeModal && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 w-full max-w-xs text-center space-y-3 shadow-2xl">
+              <h3 className="text-lg font-bold text-white">{activeModal}</h3>
+              <p className="text-xs text-zinc-400">Fitur {activeModal} sedang dalam tahap pengembangan.</p>
+              <button onClick={() => setActiveModal(null)} className="w-full py-2 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 transition">Tutup</button>
+            </div>
+          </div>
+        )}
+
+        {/* konten utamanya */}
         <main className="px-3 pt-4 space-y-6 flex-1">
           {activeBottomNav === "Beranda" ? (
             activeClusters.map((cluster: any, idx: number) => (
               <section key={idx} className="space-y-3">
-                {!cluster.properties?.hide_title && (
-                  <h2 className="text-base font-bold text-white">{cluster.title}</h2>
-                )}
+                {!cluster.properties?.hide_title && <h2 className="text-base font-bold text-white">{cluster.title}</h2>}
 
-                {/* Grid 3 (Sedang Tren) */}
+                {/* grid 3*/}
                 {cluster.properties?.type === "grid_3" && (
                   <div className="grid grid-cols-3 gap-2.5">
-                    {cluster.items?.map((item: any, i: number) => (
-                      <PosterCard key={i} item={item} badge="Dubbing" />
-                    ))}
+                    {cluster.items?.map((item: any, i: number) => <PosterCard key={i} item={item} badge="Dubbing" />)}
                   </div>
                 )}
 
-                {/* Horizontal Strip / Coming Soon (Scroll Ke Samping) */}
                 {cluster.properties?.type === "horizontal_strip" && (
                   <div className="flex gap-3 overflow-x-auto no-scrollbar py-1">
-                    {cluster.items?.map((item: any, i: number) => (
-                      <div key={i} className="flex-none w-32">
-                        <PosterCard item={item} isGrid2 />
-                      </div>
-                    ))}
+                    {cluster.items?.map((item: any, i: number) => <div key={i} className="flex-none w-32"><PosterCard item={item} isGrid2 /></div>)}
                   </div>
                 )}
 
-                {/* Grid 2 (You Might Like / Segmentation Items) */}
+                {/* grid 2*/}
                 {cluster.properties?.type === "grid_2" && (
                   <div className="space-y-4">
                     {cluster.items?.map((sub: any, subIdx: number) => (
                       <div key={subIdx} className="space-y-2">
-                        {sub.segmentation_name && (
-                          <h3 className="text-xs font-bold text-rose-500 uppercase">{sub.segmentation_name}</h3>
-                        )}
+                        {sub.segmentation_name && <h3 className="text-xs font-bold text-rose-500 uppercase">{sub.segmentation_name}</h3>}
                         <div className="grid grid-cols-2 gap-3">
-                          {sub.segmentation_items?.map((item: any, i: number) => (
-                            <PosterCard key={i} item={item} isGrid2 />
-                          ))}
+                          {sub.segmentation_items?.map((item: any, i: number) => <PosterCard key={i} item={item} isGrid2 />)}
                         </div>
                       </div>
                     ))}
@@ -245,7 +166,7 @@ export default function VPlusShortApp() {
           )}
         </main>
 
-        {/* BOTTOM NAVIGATION */}
+        {/* bottom nav*/}
         <footer className="fixed bottom-0 w-full max-w-[480px] bg-black/95 backdrop-blur-lg border-t border-zinc-900 px-6 py-2.5 flex justify-between items-center z-50">
           {[
             { id: "Beranda", label: "Beranda", icon: Home },
@@ -256,13 +177,7 @@ export default function VPlusShortApp() {
             const Icon = item.icon;
             const isActive = activeBottomNav === item.id;
             return (
-              <button
-                key={item.id}
-                onClick={() => setActiveBottomNav(item.id)}
-                className={`flex flex-col items-center gap-1 transition-colors ${
-                  isActive ? "text-rose-500" : "text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
+              <button key={item.id} onClick={() => setActiveBottomNav(item.id)} className={`flex flex-col items-center gap-1 transition-colors ${isActive ? "text-rose-500" : "text-zinc-500 hover:text-zinc-300"}`}>
                 <Icon className="w-5 h-5" />
                 <span className="text-[10px] font-medium">{item.label}</span>
               </button>
